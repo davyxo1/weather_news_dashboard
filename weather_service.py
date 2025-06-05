@@ -18,5 +18,5 @@ def get_weather(city):
         "descripcion": data["weather"][0]["description"],
         "temperatura": data["main"]["temp"],
         "humedad": data["main"]["humidity"],
-        "viento_kmh": data["wind"]["speed"] * 3.6  # m/s a km/h
+        "viento_kmh": data["wind"]["speed"] * 3.6
     }
