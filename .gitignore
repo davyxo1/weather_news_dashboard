@@ -1,0 +1,4 @@
+venv/
+.env
+__pycache__/
+reporte_diario.json
