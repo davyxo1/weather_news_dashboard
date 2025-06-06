@@ -1,32 +1,48 @@
 import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from config import EMAIL_USER, EMAIL_PASS
+from email.message import EmailMessage
 
-def enviar_correo(destinatario, contenido):
-    if not EMAIL_USER or not EMAIL_PASS:
-        raise ValueError("❌ EMAIL_USER o EMAIL_PASS no están definidos. Verifica tu archivo .env.")
+def crear_cuerpo_correo(fecha, pais, ciudad, clima, temp, noticias):
+    cuerpo = f"""\
+🌤️ Reporte Diario — {fecha}
 
-    if not contenido or not destinatario:
-        raise ValueError("❌ El contenido o el destinatario están vacíos.")
+📍 País: {pais}  
+🏙️ Ciudad: {ciudad}
 
-    asunto = "📬 Reporte Automático - Clima y Noticias"
+🌡️ Clima: {clima}  
+🌡️ Temperatura: {temp}°C
 
-    mensaje = MIMEMultipart()
-    mensaje["From"] = EMAIL_USER
-    mensaje["To"] = destinatario
-    mensaje["Subject"] = asunto
+---
 
-    cuerpo = MIMEText(contenido, "plain", "utf-8")
-    mensaje.attach(cuerpo)
+📰 Principales Noticias:
+"""
+    for i, noticia in enumerate(noticias, 1):
+        titulo = noticia['titulo']
+        fuente = noticia['fuente']
+        url = noticia['url']
+        cuerpo += f"{i}. {titulo} ({fuente})\n   🔗 {url}\n\n"
 
+    return cuerpo
+
+
+def enviar_correo(destinatario, fecha, pais, ciudad, clima, temp, noticias):
+    remitente = "tucorreo@gmail.com"
+    contraseña = "tu_contraseña_de_app"  # Usa una contraseña de aplicación de Gmail
+
+    # Crear el mensaje
+    mensaje = EmailMessage()
+    mensaje['Subject'] = f"🌍 Reporte Diario - {fecha}"
+    mensaje['From'] = remitente
+    mensaje['To'] = destinatario
+
+    # Crear el cuerpo del mensaje
+    cuerpo = crear_cuerpo_correo(fecha, pais, ciudad, clima, temp, noticias)
+    mensaje.set_content(cuerpo)
+
+    # Enviar el correo
     try:
-        servidor = smtplib.SMTP("smtp.gmail.com", 587)
-        servidor.starttls()
-        servidor.login(EMAIL_USER, EMAIL_PASS)
-        servidor.sendmail(EMAIL_USER, destinatario, mensaje.as_string())
-        servidor.quit()
-        print(f"✅ Correo enviado exitosamente a {destinatario}")
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(remitente, contraseña)
+            smtp.send_message(mensaje)
+        print("✅ Correo enviado correctamente.")
     except Exception as e:
         print(f"❌ Error al enviar el correo: {e}")
-        raise
