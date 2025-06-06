@@ -1,4 +1,5 @@
-from weather_service import get_weather
+from news_service import get_news
 
-clima = get_weather("La Serena")
-print(clima)
+noticias = get_news()
+for noticia in noticias:
+    print(noticia)

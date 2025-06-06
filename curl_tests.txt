@@ -1,0 +1,151 @@
+# Resultados de Pruebas con curl
+
+---
+ 
+1. Clima Actual - La Serena (OpenWeatherMap)
+
+# Comando usado:
+# curl "http://api.openweathermap.org/data/2.5/weather?q=La%20Serena,CL&appid=877646768a650724c586fa601fcec1f7&units=metric&lang=es"
+#
+# Explicación:
+# - Se utiliza la API de OpenWeatherMap para consultar el clima actual.
+# - "q=La%20Serena,CL": ciudad y país a consultar.
+# - "appid=...": API Key de autenticación.
+# - "units=metric": entrega la temperatura en grados Celsius.
+# - "lang=es": devuelve los resultados en español.
+
+Respuesta:
+- StatusCode: 200 OK
+- Contenido (JSON parcial):
+{
+  "coord": {"lon": -71.2542, "lat": -29.9078},
+  "weather": [{"id":800, "main":"Clear", "description":"cielo claro", "icon":"01n"}],
+  "main": {"temp": 8.73, "feels_like": 8.73, "temp_min": 8.73, "temp_max": 8.73, "pressure": 1015, "humidity": 87}
+}
+
+# Estructura del JSON:
+# - "coord": Coordenadas geográficas de la ciudad.
+# - "weather": Descripción general del clima.
+# - "main": Información principal del clima (temperatura, humedad, presión, etc.)
+
+# Campos relevantes extraídos:
+# - Temperatura actual: "temp": 8.73°C
+# - Sensación térmica: "feels_like": 8.73°C
+# - Temperatura mínima: "temp_min": 8.73°C
+# - Temperatura máxima: "temp_max": 8.73°C
+# - Humedad relativa: "humidity": 87%
+# - Presión atmosférica: "pressure": 1015 hPa
+# - Descripción del clima: "description": "cielo claro"
+
+---
+
+2. Noticias en Chile (NewsAPI)
+
+curl "https://newsapi.org/v2/top-headlines?country=cl&apiKey=fa39869a370d4a49a7c8deafba0c1123"
+
+# Explicación:
+# - API utilizada: NewsAPI.
+# - Se consultan los titulares principales del país Chile ("country=cl").
+# - "apiKey": clave de autenticación del usuario.
+
+Respuesta:
+- StatusCode: 200 OK
+- Contenido:
+{
+  "status": "ok",
+  "totalResults": 0,
+  "articles": []
+}
+
+(No se encontraron noticias para esta consulta.)
+
+---
+
+3. Información País Chile (RestCountries)
+
+curl "https://restcountries.com/v3.1/name/chile"
+
+# Explicación:
+# - API utilizada: RestCountries.
+# - Se consulta por el nombre del país "chile".
+# - Entrega información detallada sobre el país, como idioma, nombre oficial, dominio, etc.
+
+Respuesta:
+- StatusCode: 200 OK
+- Contenido (JSON parcial):
+[
+  {
+    "name": {
+      "common": "Chile",
+      "official": "Republic of Chile",
+      "nativeName": {
+        "spa": {"official": "República de Chile", "common": "Chile"}
+      }
+    },
+    "tld": [".cl"],
+    "cca2": "CL"
+  }
+]
+
+---
+
+4. Pronóstico Clima - La Serena (OpenWeatherMap)
+
+curl "http://api.openweathermap.org/data/2.5/forecast?q=La%20Serena,CL&appid=877646768a650724c586fa601fcec1f7&units=metric&lang=es"
+
+# Explicación:
+# - Consulta el pronóstico del clima para los próximos 5 días en La Serena, Chile.
+# - "forecast": devuelve clima en intervalos de 3 horas.
+# - Parámetros similares al clima actual: ciudad, API Key, unidades métricas y lenguaje.
+
+Respuesta:
+- StatusCode: 200 OK
+- Contenido (JSON parcial):
+{
+  "cod": "200",
+  "message": 0,
+  "cnt": 40,
+  "list": [
+    {
+      "dt": 1748595600,
+      "main": {
+        "temp": 9.98,
+        "feels_like": 9.98
+      }
+    }
+  ]
+}
+
+# Detalles:
+# - "cnt": número de predicciones.
+# - "list": contiene las predicciones en intervalos de 3 horas.
+# - Cada objeto dentro de "list" tiene datos como temperatura, humedad, etc.
+
+---
+
+5. Noticias Tecnología en Chile (NewsAPI)
+
+curl "https://newsapi.org/v2/top-headlines?country=cl&category=technology&apiKey=fa39869a370d4a49a7c8deafba0c1123"
+
+# Explicación:
+# - Consulta noticias específicas de la categoría "technology" en Chile.
+# - API utilizada: NewsAPI, misma clave que anteriores.
+
+Respuesta:
+- StatusCode: 200 OK
+- Contenido:
+{
+  "status": "ok",
+  "totalResults": 0,
+  "articles": []
+}
+
+(No se encontraron noticias para esta consulta.)
+
+---
+
+# Notas
+- Todos los endpoints responden con código 200, indicando que las solicitudes fueron exitosas.
+- Las APIs de noticias no entregaron artículos, probablemente por falta de noticias en esa categoría o país.
+- Los datos de clima y país retornan JSON con información útil y clara.
+- En la Tarea 1.1 se cumplió con: el uso de curl, explicación del comando, estructura de respuesta JSON, y al menos 5 campos clave (temperatura, humedad, etc).
