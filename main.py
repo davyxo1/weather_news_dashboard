@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 import threading
 import re
 import os
+import json
 
 from dashboard import generar_reporte
 from gmail_service import enviar_correo
@@ -15,29 +16,25 @@ def enviar_reporte(pais, ciudad, correo, estado_label):
     try:
         generar_reporte(pais, ciudad)
 
-        if not os.path.exists("reporte_diario.txt"):
-            estado_label.config(text="Error: No se encontró reporte_diario.txt", foreground="red")
+        if not os.path.exists("reporte_diario.json"):
+            estado_label.config(text="Error: No se encontró reporte_diario.json", foreground="red")
             return
 
-        with open("reporte_diario.txt", "r", encoding="utf-8") as f:
-            contenido = f.read()
+        with open("reporte_diario.json", "r", encoding="utf-8") as f:
+            reporte = json.load(f)
 
-        # Extraer información del contenido
-        try:
-            fecha = re.search(r"Fecha:\s+(.*)", contenido).group(1)
-            ciudad = re.search(r"Ciudad:\s+(.*)", contenido).group(1)
-            pais = re.search(r"País:\s+(.*)", contenido).group(1)
-            clima = re.search(r"Clima:\s+(.*)", contenido).group(1)
-            temp = re.search(r"Temperatura:\s+(.*)", contenido).group(1)
-            noticias = re.search(r"Noticias:\s+(.*)", contenido, re.DOTALL).group(1).strip()
-        except Exception as e:
-            estado_label.config(text=f"❌ Error al leer el reporte: {e}", foreground="red")
-            return
+        fecha = reporte.get("fecha", "")
+        pais = reporte.get("pais", "")
+        ciudad = reporte.get("ciudad", "")
+        clima = reporte.get("clima", {})
+        temp = f"{clima.get('temperatura', '')}°C" if clima else ""
+        descripcion_clima = clima.get("descripcion", "")
+        noticias = reporte.get("noticias", [])
 
         def tarea_envio():
             estado_label.config(text="📨 Enviando correo...", foreground="blue")
             try:
-                enviar_correo(correo, fecha, pais, ciudad, clima, temp, noticias)
+                enviar_correo(correo, fecha, pais, ciudad, descripcion_clima, temp, noticias)
                 estado_label.config(text="✅ Correo enviado con éxito.", foreground="green")
             except Exception as e:
                 estado_label.config(text=f"❌ Error al enviar el correo: {e}", foreground="red")
