@@ -3,21 +3,32 @@ from email.message import EmailMessage
 from dotenv import load_dotenv
 import os
 
-load_dotenv()  # Carga las variables del archivo .env
+load_dotenv()
 
-def crear_cuerpo_correo(fecha, pais, ciudad, clima, temp, noticias):
-    cuerpo = f"""Reporte Diario — {fecha}
+def crear_cuerpo_html(fecha, pais, ciudad, clima, temp, noticias):
+    cuerpo = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; color: #333;">
+        <h2 style="color: #2E86C1;">🌎 Reporte Diario — {fecha}</h2>
+        <p><strong>País:</strong> {pais}<br>
+        <strong>Ciudad:</strong> {ciudad}<br>
+        <strong>Clima:</strong> {clima}<br>
+        <strong>Temperatura:</strong> {temp}°C</p>
+        <hr>
+        <h3 style="color: #2E86C1;">📰 Noticias principales:</h3>
+        <ul>
+    """
+    for noticia in noticias:
+        cuerpo += f"""<li>
+            <strong>{noticia['titulo']}</strong> <em>({noticia['fuente']})</em><br>
+            <a href="{noticia['url']}" target="_blank">Leer más</a>
+        </li><br>"""
 
-Pais: {pais}
-Ciudad: {ciudad}
-Clima: {clima}
-Temperatura: {temp}°C
-
-Noticias principales:
-"""
-    for i, noticia in enumerate(noticias, 1):
-        cuerpo += f"{i}. {noticia['titulo']} ({noticia['fuente']})\n   {noticia['url']}\n\n"
-
+    cuerpo += """
+        </ul>
+    </body>
+    </html>
+    """
     return cuerpo
 
 def enviar_correo(destinatario, fecha, pais, ciudad, clima, temp, noticias):
@@ -28,7 +39,9 @@ def enviar_correo(destinatario, fecha, pais, ciudad, clima, temp, noticias):
     mensaje["Subject"] = f"Reporte Diario - {fecha}"
     mensaje["From"] = remitente
     mensaje["To"] = destinatario
-    mensaje.set_content(crear_cuerpo_correo(fecha, pais, ciudad, clima, temp, noticias))
+
+    cuerpo_html = crear_cuerpo_html(fecha, pais, ciudad, clima, temp, noticias)
+    mensaje.add_alternative(cuerpo_html, subtype="html")
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
