@@ -1,47 +1,38 @@
 import smtplib
 from email.message import EmailMessage
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Carga las variables del archivo .env
 
 def crear_cuerpo_correo(fecha, pais, ciudad, clima, temp, noticias):
-    cuerpo = f"""\
-🌤️ Reporte Diario — {fecha}
+    cuerpo = f"""Reporte Diario — {fecha}
 
-📍 País: {pais}  
-🏙️ Ciudad: {ciudad}
+Pais: {pais}
+Ciudad: {ciudad}
+Clima: {clima}
+Temperatura: {temp}°C
 
-🌡️ Clima: {clima}  
-🌡️ Temperatura: {temp}°C
-
----
-
-📰 Principales Noticias:
+Noticias principales:
 """
     for i, noticia in enumerate(noticias, 1):
-        titulo = noticia['titulo']
-        fuente = noticia['fuente']
-        url = noticia['url']
-        cuerpo += f"{i}. {titulo} ({fuente})\n   🔗 {url}\n\n"
+        cuerpo += f"{i}. {noticia['titulo']} ({noticia['fuente']})\n   {noticia['url']}\n\n"
 
     return cuerpo
 
-
 def enviar_correo(destinatario, fecha, pais, ciudad, clima, temp, noticias):
-    remitente = "tucorreo@gmail.com"
-    contraseña = "tu_contraseña_de_app"  # Usa una contraseña de aplicación de Gmail
+    remitente = os.getenv("EMAIL_USER")
+    contrasena = os.getenv("EMAIL_PASS")
 
-    # Crear el mensaje
     mensaje = EmailMessage()
-    mensaje['Subject'] = f"🌍 Reporte Diario - {fecha}"
-    mensaje['From'] = remitente
-    mensaje['To'] = destinatario
+    mensaje["Subject"] = f"Reporte Diario - {fecha}"
+    mensaje["From"] = remitente
+    mensaje["To"] = destinatario
+    mensaje.set_content(crear_cuerpo_correo(fecha, pais, ciudad, clima, temp, noticias))
 
-    # Crear el cuerpo del mensaje
-    cuerpo = crear_cuerpo_correo(fecha, pais, ciudad, clima, temp, noticias)
-    mensaje.set_content(cuerpo)
-
-    # Enviar el correo
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login(remitente, contraseña)
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(remitente, contrasena)
             smtp.send_message(mensaje)
         print("✅ Correo enviado correctamente.")
     except Exception as e:

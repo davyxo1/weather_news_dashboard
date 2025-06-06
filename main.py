@@ -22,8 +22,29 @@ def enviar_reporte(pais, ciudad, correo, tipo_envio, valor_extra, estado_label):
             return
 
         with open("reporte_diario.txt", "r", encoding="utf-8") as f:
-            reporte = f.read()
+            contenido = f.read()
 
+        # Extraer fecha
+        match_fecha = re.search(r"Reporte Diario - (\d{4}-\d{2}-\d{2} \d{2}:\d{2})", contenido)
+        fecha = match_fecha.group(1) if match_fecha else datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        # Extraer clima y temperatura
+        match_clima = re.search(r"Clima: (.+?)\s*\|", contenido)
+        match_temp = re.search(r"Temp: ([\d.]+)", contenido)
+        clima = match_clima.group(1) if match_clima else "Desconocido"
+        temp = match_temp.group(1) if match_temp else "0"
+
+        # Extraer noticias
+        noticias = []
+        noticia_regex = r"\d+\.\s(.+?)\s\((.+?)\)\s+URL:\s(.+)"
+        for match in re.finditer(noticia_regex, contenido):
+            noticias.append({
+                "titulo": match.group(1),
+                "fuente": match.group(2),
+                "url": match.group(3)
+            })
+
+        # Calcular delay
         if tipo_envio == "Ahora":
             delay = 0
         elif tipo_envio == "En X minutos":
@@ -54,7 +75,7 @@ def enviar_reporte(pais, ciudad, correo, tipo_envio, valor_extra, estado_label):
 
             estado_label.config(text="📨 Enviando correo...")
             try:
-                enviar_correo(correo, reporte)
+                enviar_correo(correo, fecha, pais, ciudad, clima, temp, noticias)
                 estado_label.config(text="✅ Correo enviado con éxito.")
             except Exception as e:
                 if "535" in str(e):
