@@ -24,10 +24,49 @@ def enviar_reporte(pais, ciudad, correo, tipo_envio, valor_extra, estado_label):
         with open("reporte_diario.txt", "r", encoding="utf-8") as f:
             contenido = f.read()
 
-        # Extracción datos omitida para brevedad...
+        # Extraer información del contenido del reporte
+        fecha = ciudad = pais = clima = temp = noticias = "No disponible"
+        try:
+            fecha = re.search(r"Fecha:\s+(.*)", contenido).group(1)
+            ciudad = re.search(r"Ciudad:\s+(.*)", contenido).group(1)
+            pais = re.search(r"País:\s+(.*)", contenido).group(1)
+            clima = re.search(r"Clima:\s+(.*)", contenido).group(1)
+            temp = re.search(r"Temperatura:\s+(.*)", contenido).group(1)
+            noticias = re.search(r"Noticias:\s+(.*)", contenido, re.DOTALL).group(1).strip()
+        except Exception as e:
+            estado_label.config(text=f"❌ Error al leer el reporte: {e}", foreground="red")
+            return
 
-        # Cálculo delay omitido para brevedad...
+        # Cálculo del delay según el tipo de envío
+        ahora = datetime.now()
+        delay = 0  # valor por defecto
 
+        if tipo_envio == "Ahora":
+            delay = 0
+
+        elif tipo_envio == "En X minutos":
+            try:
+                minutos = int(valor_extra)
+                if minutos < 0:
+                    raise ValueError("El tiempo no puede ser negativo.")
+                delay = minutos * 60
+            except ValueError:
+                estado_label.config(text="❌ Ingresa un número válido de minutos.", foreground="red")
+                return
+
+        elif tipo_envio == "Fecha específica":
+            try:
+                fecha_envio = datetime.strptime(valor_extra, "%d-%m-%Y %H:%M")
+                diferencia = (fecha_envio - ahora).total_seconds()
+                if diferencia < 0:
+                    estado_label.config(text="❌ La fecha y hora ya han pasado.", foreground="red")
+                    return
+                delay = diferencia
+            except ValueError:
+                estado_label.config(text="❌ Formato de fecha inválido. Usa: dd-mm-aaaa hh:mm", foreground="red")
+                return
+
+        # Crear hilo para enviar el correo (puede esperar si es necesario)
         def tarea_envio():
             if delay > 0:
                 estado_label.config(text=f"⏳ Esperando {round(delay / 60, 2)} minutos...", foreground="orange")
@@ -50,40 +89,33 @@ def iniciar_interfaz():
     root.title("Envio de Reporte Climatico y Noticias")
     root.geometry("520x400")
     root.resizable(False, False)
-    root.config(bg="#f5f7fa")  # Fondo suave
+    root.config(bg="#f5f7fa")
 
     fuente_label = ("Helvetica", 11, "bold")
     fuente_entry = ("Helvetica", 11)
     fuente_btn = ("Helvetica", 12, "bold")
 
-    # Contenedor principal con padding
     main_frame = tk.Frame(root, bg="#f5f7fa", padx=20, pady=20)
     main_frame.pack(fill=tk.BOTH, expand=True)
 
-    # Titulo
     titulo = tk.Label(main_frame, text="Enviar Reporte Climático y Noticias", font=("Helvetica", 16, "bold"), bg="#f5f7fa", fg="#333")
     titulo.pack(pady=(0,15))
 
-    # Frame para inputs
     form_frame = tk.Frame(main_frame, bg="#f5f7fa")
     form_frame.pack(fill=tk.X, pady=10)
 
-    # País
     tk.Label(form_frame, text="Código del país (ej: cl):", font=fuente_label, bg="#f5f7fa", fg="#555").grid(row=0, column=0, sticky="w", pady=6)
     entry_pais = ttk.Entry(form_frame, font=fuente_entry, width=30)
     entry_pais.grid(row=0, column=1, pady=6, padx=10)
 
-    # Ciudad
     tk.Label(form_frame, text="Ciudad:", font=fuente_label, bg="#f5f7fa", fg="#555").grid(row=1, column=0, sticky="w", pady=6)
     entry_ciudad = ttk.Entry(form_frame, font=fuente_entry, width=30)
     entry_ciudad.grid(row=1, column=1, pady=6, padx=10)
 
-    # Correo
     tk.Label(form_frame, text="Correo destinatario:", font=fuente_label, bg="#f5f7fa", fg="#555").grid(row=2, column=0, sticky="w", pady=6)
     entry_correo = ttk.Entry(form_frame, font=fuente_entry, width=30)
     entry_correo.grid(row=2, column=1, pady=6, padx=10)
 
-    # Cuando enviar
     tk.Label(form_frame, text="¿Cuándo enviar el correo?", font=fuente_label, bg="#f5f7fa", fg="#555").grid(row=3, column=0, sticky="w", pady=6)
     combo_opciones = ttk.Combobox(form_frame, values=["Ahora", "En X minutos", "Fecha específica"], state="readonly", font=fuente_entry, width=28)
     combo_opciones.current(0)
