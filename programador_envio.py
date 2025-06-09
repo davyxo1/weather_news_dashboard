@@ -1,62 +1,53 @@
-import time
-import datetime
 import threading
+from datetime import datetime, timedelta
+import time
 import json
-import re  # Importamos todo el módulo re correctamente
 from dashboard import generar_reporte
 from gmail_service import enviar_correo
 
-CONFIG_FILE = "config_envio.json"
+# NUEVO: función de prueba para enviar en 1 minuto
+def calcular_proxima_ejecucion_prueba():
+    return datetime.now() + timedelta(minutes=1)
 
-def cargar_configuracion():
-    try:
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"❌ No se pudo leer la configuración: {e}")
-        return None
+def esperar_y_enviar_cada_minuto_prueba(destinatario, pais, ciudad, callback_estado=None):
+    def tarea():
+        while True:
+            proximo_envio = calcular_proxima_ejecucion_prueba()
+            ahora = datetime.now()
+            segundos_espera = (proximo_envio - ahora).total_seconds()
 
-def envio_automatico():
-    while True:
-        config = cargar_configuracion()
-        if not config:
-            time.sleep(60)
-            continue
+            if callback_estado:
+                callback_estado(f"⌛ Envío de prueba programado para {proximo_envio.strftime('%Y-%m-%d %H:%M:%S')}", "blue")
 
-        hora_actual = datetime.datetime.now().time()
-        hora_objetivo = datetime.time(
-            int(config["hora"]), int(config["minuto"])
-        )
+            time.sleep(segundos_espera)
 
-        if (
-            hora_actual.hour == hora_objetivo.hour
-            and hora_actual.minute == hora_objetivo.minute
-        ):
+            if callback_estado:
+                callback_estado("📨 Enviando correo de prueba...", "blue")
+
             try:
-                print("⏰ Enviando correo automático diario...")
+                generar_reporte(pais, ciudad)
+                with open("reporte_diario.json", "r", encoding="utf-8") as f:
+                    reporte = json.load(f)
 
-                generar_reporte(config["pais"], config["ciudad"])
+                fecha = reporte.get("fecha", "")
+                pais_r = reporte.get("pais", "")
+                ciudad_r = reporte.get("ciudad", "")
+                clima = reporte.get("clima", {})
+                temp = f"{clima.get('temperatura', '')}°C" if clima else ""
+                descripcion_clima = clima.get("descripcion", "")
+                noticias = reporte.get("noticias", [])
 
-                with open("reporte_diario.txt", "r", encoding="utf-8") as f:
-                    contenido = f.read()
+                enviar_correo(destinatario, fecha, pais_r, ciudad_r, descripcion_clima, temp, noticias)
 
-                asunto = f"Reporte Diario - {datetime.datetime.now().strftime('%Y-%m-%d')}"
-
-                cuerpo = contenido
-
-                enviar_correo(
-                    destinatario=config["correo"],
-                    asunto=asunto,
-                    mensaje=cuerpo
-                )
-
-                print("✅ Correo automático enviado.")
-                time.sleep(61)  # esperar más de 1 minuto para evitar envíos dobles
+                if callback_estado:
+                    callback_estado(f"✅ Correo de prueba enviado el {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", "green")
             except Exception as e:
-                print(f"❌ Error en envío automático: {e}")
-        else:
-            time.sleep(20)
+                if callback_estado:
+                    callback_estado(f"❌ Error en envío de prueba: {e}", "red")
 
-def iniciar_programador():
-    hilo = threading.Thread(target=envio_automatico, daemon=True)
+            # NUEVO: espera solo 1 minuto para repetir (repetición rápida)
+            time.sleep(60)
+
+    print("🕒 Programador de prueba iniciado...")
+    hilo = threading.Thread(target=tarea, daemon=True)
     hilo.start()
